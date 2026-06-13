@@ -1,7 +1,7 @@
 # app/events/schemas.py
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Literal, List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -248,6 +248,10 @@ class StandOut(StandRequest):
     status: str
     created_at: datetime
     updated_at: datetime
+
+
+class StandStatusUpdateRequest(BaseModel):
+    status: Literal["approved", "rejected"]
 
 
 class CompanySpeakerRequest(BaseModel):

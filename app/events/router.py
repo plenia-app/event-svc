@@ -16,6 +16,7 @@ from app.events.schemas import (
     EventOut,
     StandOut,
     StandRequest,
+    StandStatusUpdateRequest,
 )
 from app.events.service import EventService
 
@@ -224,6 +225,21 @@ async def list_stands(
     if company_id:
         stands = [stand for stand in stands if stand.get("company_id") == company_id]
     return stands
+
+
+@router.patch("/{event_id}/stands/{stand_id}", response_model=StandOut)
+async def update_stand_status(
+    event_id: str,
+    stand_id: str,
+    request: StandStatusUpdateRequest,
+    service: EventService = Depends(get_service),
+):
+    result = await service.update_stand_status(event_id, stand_id, request.status)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    if result is False:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stand not found")
+    return result
 
 
 @router.post(

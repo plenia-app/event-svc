@@ -82,6 +82,26 @@ class EventRepository:
         )
         return result.modified_count == 1
 
+    async def update_stand_status(self, event_id: str, stand_id: str, status: str):
+        if not ObjectId.is_valid(event_id):
+            return False
+
+        now = datetime.utcnow()
+        result = await self.collection.update_one(
+            {
+                "_id": ObjectId(event_id),
+                "stands.id": stand_id,
+            },
+            {
+                "$set": {
+                    "stands.$.status": status,
+                    "stands.$.updated_at": now,
+                    "updated_at": now,
+                }
+            }
+        )
+        return result.modified_count == 1
+
     async def add_company_speaker(self, event_id: str, speaker: dict):
         if not ObjectId.is_valid(event_id):
             return False

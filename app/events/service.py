@@ -158,6 +158,19 @@ class EventService:
             return False
         return stand
 
+    async def update_stand_status(self, event_id: str, stand_id: str, status: str):
+        event = await self.repo.find_by_id(event_id)
+        if event is None:
+            return None
+
+        saved = await self.repo.update_stand_status(event_id, stand_id, status)
+        if not saved:
+            return False
+
+        updated = await self.repo.find_by_id(event_id)
+        stands = updated.get("stands", []) if updated else []
+        return next((stand for stand in stands if stand.get("id") == stand_id), False)
+
     async def add_company_speaker(self, event_id: str, speaker_request):
         event = await self.repo.find_by_id(event_id)
         if event is None:
