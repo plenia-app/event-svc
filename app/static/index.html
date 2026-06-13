@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plenia Event Service Tester</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #5f6b7a;
+      --line: #d8dee7;
+      --accent: #126b5a;
+      --accent-dark: #0d5144;
+      --danger: #b3261e;
+      --ok: #146c43;
+      --code: #101820;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    main {
+      padding: 24px 0 40px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 20px;
+      align-items: start;
+    }
+
+    section,
+    aside {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    section + section {
+      margin-top: 20px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 17px;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 11px;
+      color: var(--text);
+      background: #fff;
+      font: inherit;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    button,
+    .link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border: 0;
+      border-radius: 6px;
+      padding: 0 14px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button:hover,
+    .link-button:hover {
+      background: var(--accent-dark);
+    }
+
+    button.secondary,
+    .link-button.secondary {
+      background: #e9eef3;
+      color: var(--text);
+    }
+
+    button.secondary:hover,
+    .link-button.secondary:hover {
+      background: #dce4ec;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .status {
+      min-height: 22px;
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status.ok {
+      color: var(--ok);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    pre {
+      min-height: 320px;
+      max-height: 620px;
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--code);
+      color: #e8edf2;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .topbar,
+      .grid,
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        display: grid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap topbar">
+      <div>
+        <h1>Plenia Event Service Tester</h1>
+        <p class="subtitle">Frontend minimo per provare le route e confrontarle con Swagger.</p>
+      </div>
+      <div class="actions">
+        <a class="link-button secondary" href="/docs" target="_blank" rel="noreferrer">Apri Swagger</a>
+        <a class="link-button secondary" href="/openapi.json" target="_blank" rel="noreferrer">OpenAPI JSON</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <div>
+      <section>
+        <h2>Crea evento</h2>
+        <form id="create-event-form">
+          <div class="row">
+            <label>
+              Creator ID
+              <input name="creator_id" value="user_123" required>
+            </label>
+            <label>
+              Nome evento
+              <input name="name" value="Plenia Community Meetup" required>
+            </label>
+          </div>
+          <label>
+            Descrizione
+            <textarea name="description">An evening meetup for the Plenia community.</textarea>
+          </label>
+          <div class="row">
+            <label>
+              Inizio
+              <input name="start_date" type="datetime-local" required>
+            </label>
+            <label>
+              Fine
+              <input name="end_date" type="datetime-local" required>
+            </label>
+          </div>
+          <label>
+            Location name
+            <input name="location_name" value="Milano Innovation Hub">
+          </label>
+          <div class="row">
+            <label>
+              Latitudine
+              <input name="latitude" type="number" step="any" value="45.4642">
+            </label>
+            <label>
+              Longitudine
+              <input name="longitude" type="number" step="any" value="9.19">
+            </label>
+          </div>
+          <label>
+            Indirizzo
+            <input name="address" value="Piazza del Duomo, Milano">
+          </label>
+          <div class="actions">
+            <button type="submit">POST /events</button>
+            <button class="secondary" type="button" id="reset-create">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <section>
+        <h2>Aggiungi organizer</h2>
+        <form id="add-organizers-form">
+          <label>
+            Event ID
+            <input name="event_id" id="event-id" placeholder="Creato automaticamente dopo POST /events" required>
+          </label>
+          <div class="row">
+            <label>
+              Email organizer
+              <input name="email" type="email" value="organizer@example.com" required>
+            </label>
+            <label>
+              Ruolo
+              <input name="role" value="organizer" required>
+            </label>
+          </div>
+          <div class="actions">
+            <button type="submit">POST /events/{id}/organizers</button>
+          </div>
+        </form>
+        <p class="hint">Questa chiamata può fallire se auth service o database non sono configurati.</p>
+      </section>
+    </div>
+
+    <aside>
+      <h2>Risposta</h2>
+      <p id="status" class="status">Nessuna richiesta eseguita.</p>
+      <pre id="output">{}</pre>
+    </aside>
+  </main>
+
+  <script>
+    const output = document.querySelector('#output');
+    const statusLine = document.querySelector('#status');
+    const eventIdInput = document.querySelector('#event-id');
+    const createForm = document.querySelector('#create-event-form');
+    const addForm = document.querySelector('#add-organizers-form');
+
+    function toIsoFromLocal(value) {
+      if (!value) return null;
+      return new Date(value).toISOString();
+    }
+
+    function setStatus(message, type) {
+      statusLine.textContent = message;
+      statusLine.className = `status ${type || ''}`.trim();
+    }
+
+    function showPayload(payload) {
+      output.textContent = JSON.stringify(payload, null, 2);
+    }
+
+    async function sendJson(url, body) {
+      const startedAt = performance.now();
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const text = await response.text();
+      let payload;
+
+      try {
+        payload = text ? JSON.parse(text) : null;
+      } catch (_error) {
+        payload = text;
+      }
+
+      const duration = Math.round(performance.now() - startedAt);
+      return { ok: response.ok, status: response.status, duration, payload };
+    }
+
+    function buildCreatePayload(form) {
+      const data = new FormData(form);
+      const latitude = data.get('latitude');
+      const longitude = data.get('longitude');
+      const address = data.get('address');
+      const payload = {
+        creator_id: data.get('creator_id'),
+        name: data.get('name'),
+        description: data.get('description') || null,
+        start_date: toIsoFromLocal(data.get('start_date')),
+        end_date: toIsoFromLocal(data.get('end_date')),
+        location_name: data.get('location_name') || null,
+      };
+
+      if (latitude && longitude) {
+        payload.geo_location = {
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          address: address || null,
+        };
+      }
+
+      return payload;
+    }
+
+    createForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setStatus('Invio POST /events...', '');
+
+      const body = buildCreatePayload(createForm);
+      showPayload({ request: body });
+
+      try {
+        const result = await sendJson('/events', body);
+        showPayload(result);
+        setStatus(`POST /events -> ${result.status} in ${result.duration} ms`, result.ok ? 'ok' : 'error');
+
+        if (result.ok && result.payload && result.payload.event_id) {
+          eventIdInput.value = result.payload.event_id;
+        }
+      } catch (error) {
+        setStatus('Richiesta fallita', 'error');
+        showPayload({ error: String(error) });
+      }
+    });
+
+    addForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const data = new FormData(addForm);
+      const eventId = data.get('event_id');
+      const body = {
+        organizers: [
+          {
+            email: data.get('email'),
+            role: data.get('role'),
+          },
+        ],
+      };
+
+      setStatus(`Invio POST /events/${eventId}/organizers...`, '');
+      showPayload({ request: body });
+
+      try {
+        const result = await sendJson(`/events/${encodeURIComponent(eventId)}/organizers`, body);
+        showPayload(result);
+        setStatus(
+          `POST /events/${eventId}/organizers -> ${result.status} in ${result.duration} ms`,
+          result.ok ? 'ok' : 'error',
+        );
+      } catch (error) {
+        setStatus('Richiesta fallita', 'error');
+        showPayload({ error: String(error) });
+      }
+    });
+
+    document.querySelector('#reset-create').addEventListener('click', () => {
+      createForm.reset();
+      setDefaultDates();
+    });
+
+    function pad(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function toDateTimeLocal(date) {
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function setDefaultDates() {
+      const start = new Date();
+      start.setDate(start.getDate() + 7);
+      start.setMinutes(0, 0, 0);
+      const end = new Date(start);
+      end.setHours(end.getHours() + 3);
+      createForm.elements.start_date.value = toDateTimeLocal(start);
+      createForm.elements.end_date.value = toDateTimeLocal(end);
+    }
+
+    setDefaultDates();
+  </script>
+</body>
+</html>
