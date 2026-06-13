@@ -21,6 +21,27 @@ class EventRepository:
 
         return await self.collection.find_one({"_id": ObjectId(event_id)})
 
+    async def delete_by_id(self, event_id: str):
+        if not ObjectId.is_valid(event_id):
+            return False
+
+        result = await self.collection.delete_one({"_id": ObjectId(event_id)})
+        return result.deleted_count == 1
+
+    async def list_events(self, user_id: str | None = None):
+        query = {}
+        if user_id:
+            query = {
+                "$or": [
+                    {"created_by": user_id},
+                    {"organizers.user_id": user_id},
+                    {"organizers.email": user_id},
+                ]
+            }
+
+        cursor = self.collection.find(query).sort("start_date", 1)
+        return await cursor.to_list(length=200)
+
     async def update_event(self, event_id: str, update: dict):
         update["updated_at"] = datetime.utcnow()
         await self.collection.update_one(
@@ -46,4 +67,52 @@ class EventRepository:
             }
         )
 
+        return result.modified_count == 1
+
+    async def add_stand(self, event_id: str, stand: dict):
+        if not ObjectId.is_valid(event_id):
+            return False
+
+        result = await self.collection.update_one(
+            {"_id": ObjectId(event_id)},
+            {
+                "$push": {"stands": stand},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        return result.modified_count == 1
+
+    async def add_company_speaker(self, event_id: str, speaker: dict):
+        if not ObjectId.is_valid(event_id):
+            return False
+
+        result = await self.collection.update_one(
+            {"_id": ObjectId(event_id)},
+            {
+                "$push": {"company_speakers": speaker},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        return result.modified_count == 1
+
+    async def confirm_company_speaker(self, event_id: str, speaker_id: str, speech: dict):
+        if not ObjectId.is_valid(event_id):
+            return False
+
+        now = datetime.utcnow()
+        result = await self.collection.update_one(
+            {
+                "_id": ObjectId(event_id),
+                "company_speakers.id": speaker_id,
+            },
+            {
+                "$set": {
+                    "company_speakers.$.confirmed": True,
+                    "company_speakers.$.speech": speech,
+                    "company_speakers.$.confirmed_at": now,
+                    "company_speakers.$.updated_at": now,
+                    "updated_at": now,
+                }
+            }
+        )
         return result.modified_count == 1

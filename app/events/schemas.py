@@ -107,6 +107,33 @@ class CreateEventResponse(BaseModel):
         }
 
 
+class DeleteEventResponse(BaseModel):
+    event_id: str = Field(
+        ...,
+        description="MongoDB ObjectId of the deleted event.",
+        example="665f0f4a9a4e6b9a1f4c2d33",
+    )
+    deleted_stands: int = Field(0, description="Embedded stand requests removed with the event.")
+    deleted_company_speakers: int = Field(0, description="Embedded company speakers removed with the event.")
+    deleted_organizers: int = Field(0, description="Organizer links removed with the event.")
+    deleted_speeches: int = Field(0, description="Confirmed speech-svc speeches removed with the event.")
+    deleted_materials: int = Field(0, description="Speech material records removed with the event.")
+    deleted_live_sessions: int = Field(0, description="Speech live session records removed with the event.")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "event_id": "665f0f4a9a4e6b9a1f4c2d33",
+                "deleted_stands": 2,
+                "deleted_company_speakers": 3,
+                "deleted_organizers": 1,
+                "deleted_speeches": 2,
+                "deleted_materials": 4,
+                "deleted_live_sessions": 1,
+            }
+        }
+
+
 class OrganizerInput(BaseModel):
     email: str = Field(
         ...,
@@ -199,3 +226,74 @@ class ErrorResponse(BaseModel):
                 "detail": "Event not found",
             }
         }
+
+
+class EventOrganizerOut(BaseModel):
+    user_id: str
+    email: Optional[str] = None
+    role: str
+
+
+class StandRequest(BaseModel):
+    company_id: str
+    company_name: str
+    contact_email: str
+    stand_name: str
+    description: Optional[str] = None
+
+
+class StandOut(StandRequest):
+    id: str
+    event_id: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class CompanySpeakerRequest(BaseModel):
+    company_id: str
+    company_name: str
+    email: str
+    first_name: str
+    last_name: str
+    title: Optional[str] = None
+    bio: Optional[str] = None
+
+
+class SpeakerSpeechInfo(BaseModel):
+    speech_id: str
+    title: str
+    description: Optional[str] = None
+    source_language: str = "it"
+    target_languages: List[str] = Field(default_factory=list)
+    materials_count: int = 0
+
+
+class CompanySpeakerConfirmRequest(SpeakerSpeechInfo):
+    pass
+
+
+class CompanySpeakerOut(CompanySpeakerRequest):
+    id: str
+    event_id: str
+    confirmed: bool = False
+    speech: Optional[SpeakerSpeechInfo] = None
+    created_at: datetime
+    updated_at: datetime
+    confirmed_at: Optional[datetime] = None
+
+
+class EventOut(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    location_name: Optional[str] = None
+    geo_location: Optional[GeoLocationInput] = None
+    created_by: str
+    organizers: List[EventOrganizerOut] = Field(default_factory=list)
+    stands: List[StandOut] = Field(default_factory=list)
+    company_speakers: List[CompanySpeakerOut] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

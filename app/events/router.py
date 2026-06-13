@@ -6,9 +6,16 @@ import httpx
 from app.events.schemas import (
     AddOrganizersRequest,
     AddOrganizersResponse,
+    CompanySpeakerConfirmRequest,
+    CompanySpeakerOut,
+    CompanySpeakerRequest,
     CreateEventRequest,
     CreateEventResponse,
+    DeleteEventResponse,
     ErrorResponse,
+    EventOut,
+    StandOut,
+    StandRequest,
 )
 from app.events.service import EventService
 
@@ -49,6 +56,59 @@ async def create_event(
     return CreateEventResponse(
         event_id=event_id,
     )
+
+
+@router.get("", response_model=list[EventOut])
+async def list_events(
+    user_id: str | None = None,
+    service: EventService = Depends(get_service),
+):
+    return await service.list_events(user_id=user_id)
+
+
+@router.get("/{event_id}", response_model=EventOut)
+async def get_event(
+    event_id: str,
+    service: EventService = Depends(get_service),
+):
+    event = await service.get_event(event_id)
+    if event is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found",
+        )
+    return event
+
+
+@router.delete("/{event_id}", response_model=DeleteEventResponse)
+async def delete_event(
+    event_id: str,
+    service: EventService = Depends(get_service),
+):
+    try:
+        result = await service.delete_event(event_id)
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Speech cleanup failed: {exc.response.text}",
+        ) from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Speech service unavailable: {exc}",
+        ) from exc
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found",
+        )
+    if result is False:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Event could not be deleted",
+        )
+    return result
 
 
 @router.post(
@@ -130,3 +190,104 @@ async def add_organizers(
         organizer_ids=result["added"],
         skipped=result["skipped"],
     )
+
+
+@router.post(
+    "/{event_id}/stands",
+    response_model=StandOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def request_stand(
+    event_id: str,
+    request: StandRequest,
+    service: EventService = Depends(get_service),
+):
+    result = await service.add_stand(event_id, request)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    if result is False:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Stand could not be added")
+    return result
+
+
+@router.get("/{event_id}/stands", response_model=list[StandOut])
+async def list_stands(
+    event_id: str,
+    company_id: str | None = None,
+    service: EventService = Depends(get_service),
+):
+    event = await service.get_event(event_id)
+    if event is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
+    stands = event.get("stands", [])
+    if company_id:
+        stands = [stand for stand in stands if stand.get("company_id") == company_id]
+    return stands
+
+
+@router.post(
+    "/{event_id}/company-speakers",
+    response_model=CompanySpeakerOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_company_speaker(
+    event_id: str,
+    request: CompanySpeakerRequest,
+    service: EventService = Depends(get_service),
+):
+    try:
+        result = await service.add_company_speaker(event_id, request)
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Speaker registration failed: {exc.response.text}",
+        ) from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Auth service unavailable: {exc}",
+        ) from exc
+
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    if result is False:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Speaker could not be added")
+    return result
+
+
+@router.get("/{event_id}/company-speakers", response_model=list[CompanySpeakerOut])
+async def list_company_speakers(
+    event_id: str,
+    company_id: str | None = None,
+    email: str | None = None,
+    service: EventService = Depends(get_service),
+):
+    event = await service.get_event(event_id)
+    if event is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
+    speakers = event.get("company_speakers", [])
+    if company_id:
+        speakers = [speaker for speaker in speakers if speaker.get("company_id") == company_id]
+    if email:
+        speakers = [speaker for speaker in speakers if speaker.get("email") == email]
+    return speakers
+
+
+@router.post(
+    "/{event_id}/company-speakers/{speaker_id}/confirm",
+    response_model=CompanySpeakerOut,
+)
+async def confirm_company_speaker(
+    event_id: str,
+    speaker_id: str,
+    request: CompanySpeakerConfirmRequest,
+    service: EventService = Depends(get_service),
+):
+    result = await service.confirm_company_speaker(event_id, speaker_id, request)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    if result is False:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Speaker not found")
+    return result

@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.core.database import db
 from app.events.router import router as events_router
 
 app = FastAPI(
@@ -31,3 +32,9 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 @app.get("/", include_in_schema=False)
 async def frontend():
     return FileResponse(Path("app/static/index.html"))
+
+
+@app.get("/health", tags=["Health"])
+async def health():
+    await db.command("ping")
+    return {"status": "ok"}
