@@ -1,0 +1,15 @@
+services:
+  event-svc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: event_svc_app
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URL: mongodb://host.docker.internal:27017
+      DB_NAME: event_svc
+      EVENTS_COLLECTION: events
+      AUTH_SERVICE_URL: http://host.docker.internal:3001
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
